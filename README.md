@@ -2,7 +2,13 @@
 
 The k8s Terraform provider enables Terraform to deploy Kubernetes resources. Unlike the [official Kubernetes provider][kubernetes-provider] it handles raw manifests, leveraging `kubectl` directly to allow developers to work with any Kubernetes resource natively.
 
-## Usage
+## Installing
+
+### Installing the binary
+
+Download a pre-built binary for your platform from [the releases page](https://github.com/fiveai/terraform-provider-k8s/releases) and store it in e.g. `~/.terraform.d/plugins/linux_amd64/terraform-provider-k8s_v0.2.1`. More information on installing plugins can be found on [terraform's website](https://www.terraform.io/docs/plugins/basics.html#installing-plugins).
+
+### Installing from source
 
 Use `go get` to install the provider:
 
@@ -17,6 +23,7 @@ providers {
   k8s = "/$GOPATH/bin/terraform-provider-k8s"
 }
 ```
+## Usage
 
 The provider takes the following optional configuration parameters:
 
