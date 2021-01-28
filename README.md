@@ -1,6 +1,16 @@
 # Kubernetes Terraform Provider
 
-The k8s Terraform provider enables Terraform to deploy Kubernetes resources. Unlike the [official Kubernetes provider][kubernetes-provider] it handles raw manifests, leveraging `kubectl` directly to allow developers to work with any Kubernetes resource natively.
+The k8s Terraform provider enables Terraform to deploy Kubernetes resources. Unlike the
+[official Kubernetes provider][kubernetes-provider] it handles raw manifests, leveraging `kubectl` directly to allow
+developers to work with any Kubernetes resource natively.
+
+This provider is published in the [Terraform Registry Provider](https://registry.terraform.io/providers/fiveai/k8s)
+
+## ToC
+
+* [Usage](#usage)
+* [Build](#build)
+* [Publishing](#publishing)
 
 ## Usage
 
@@ -37,10 +47,11 @@ provider "k8s" {
 ```
 
 **WARNING:** Configuration from the variable will be recorded into a temporary file and the file will be removed as
-soon as call is completed. This may impact performance if the code runs on a shared system because
-and the global tempdir is used.
+soon as call is completed. This may impact performance if the code runs on a shared system because and the global
+tempdir is used.
 
-The k8s Terraform provider introduces a single Terraform resource, a `k8s_manifest`. The resource contains a `content` field, which contains a raw manifest.
+The k8s Terraform provider introduces a single Terraform resource, a `k8s_manifest`. The resource contains a `content`
+field, which contains a raw manifest.
 
 ```hcl
 variable "replicas" {
@@ -110,3 +121,21 @@ No resources found.
 ```
 
 [kubernetes-provider]: https://www.terraform.io/docs/providers/kubernetes/index.html
+
+## Build
+
+To build please use [goreleaser](https://goreleaser.com/intro/). You can edit the automated Github Actions by the
+`./.goreleaser.yml` and `./github/workflows/release.yml` files.
+
+To create a test build run the following command:
+
+```
+goreleaser build --snapshot
+```
+
+To push up a new build add a tag based on [semantic versioning](https://semver.org/) with a `v` prefix.
+
+## Publishing
+
+The configuration is a terraform and github integration with manual configuration. The provider has been setup and will
+automatically pickup new version releases in github.
