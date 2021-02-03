@@ -1,23 +1,18 @@
-data "template_file" "my-configmap" {
-  template = "${file("manifests/my-configmap.yaml")}"
-
-  vars {
-    greeting = "${var.greeting}"
-  }
-}
-
 resource "k8s_manifest" "my-configmap" {
-  content = "${data.template_file.my-configmap.rendered}"
+  name      = "my-configmap"
+  namespace = "default"
+  kind      = "ConfigMap"
+  content = templatefile("${path.module}/manifests/my-configmap.yml.tpl", {
+    app       = "dummyvalue"
+  })
 }
 
-data "template_file" "nginx-deployment" {
-  template = "${file("manifests/nginx-deployment.yaml")}"
-
-  vars {
-    replicas = "${var.replicas}"
-  }
-}
-
-resource "k8s_manifest" "nginx-deployment" {
-  content = "${data.template_file.nginx-deployment.rendered}"
+resource "k8s_manifest" "ngix-deployment" {
+  name      = "nginx-deployment-test"
+  namespace = "default"
+  kind      = "Deployment"
+  content = templatefile("${path.module}/manifests/nginx-deployment.yml.tpl", {
+    replicas  = 1
+    app       = "dummyvalue"
+  })
 }

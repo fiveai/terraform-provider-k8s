@@ -1,22 +1,40 @@
 # Kubernetes Terraform Provider
 
-The k8s Terraform provider enables Terraform to deploy Kubernetes resources. Unlike the [official Kubernetes provider][kubernetes-provider] it handles raw manifests, leveraging `kubectl` directly to allow developers to work with any Kubernetes resource natively.
+The k8s Terraform provider enables Terraform to deploy Kubernetes resources. Unlike the
+[official Kubernetes provider][kubernetes-provider] it handles raw manifests, leveraging `kubectl` directly to allow
+developers to work with any Kubernetes resource natively.
+
+This provider is published in the [Terraform Registry](https://registry.terraform.io/providers/fiveai/k8s)
+
+## ToC
+
+* [Usage](#usage)
+* [Build](#build)
+* [Publishing](#publishing)
 
 ## Usage
 
-Use `go get` to install the provider:
+### Provider and Version control
 
-```
-go get -u github.com/ericchiang/terraform-provider-k8s
-```
-
-Register the plugin in `~/.terraformrc`:
+This provider is automatically pushed to the TF Registry. You can pull it into your project uses the standard provider
+and versions notation.
 
 ```hcl
-providers {
-  k8s = "/$GOPATH/bin/terraform-provider-k8s"
+terraform {
+  required_providers {
+    kubernetes = {
+      source = "fiveai/k8s"
+      version = "0.2.1"
+    }
+  }
+}
+
+provider "kubernetes" {
+  # Configuration options
 }
 ```
+
+#### Provider Configuration options
 
 The provider takes the following optional configuration parameters:
 
@@ -37,48 +55,48 @@ provider "k8s" {
 ```
 
 **WARNING:** Configuration from the variable will be recorded into a temporary file and the file will be removed as
-soon as call is completed. This may impact performance if the code runs on a shared system because
-and the global tempdir is used.
+soon as call is completed. This may impact performance if the code runs on a shared system because the global
+tempdir is used.
 
-The k8s Terraform provider introduces a single Terraform resource, a `k8s_manifest`. The resource contains a `content` field, which contains a raw manifest.
+### Resource Definition
+
+An example of the k8s_manifest might look like.
+
+The terraform resource definition should include:
+
+* `name` of the resource
+* `namespace` to be deployed to (namespaced resources only, not cluster level)
+* `content` resource to be deployed
+* `kind` of resource being deployed, e.g. `Deployment`, `ConfigMap`
 
 ```hcl
-variable "replicas" {
-  type    = "string"
-  default = 3
-}
+resource "k8s_manifest" "dummy-deployment" {
+  name      = "dummyvalue"
+  namespace = "default"
+  kind      = "Deployment"
 
-data "template_file" "nginx-deployment" {
-  template = "${file("manifests/nginx-deployment.yaml")}"
-
-  vars {
-    replicas = "${var.replicas}"
-  }
-}
-
-resource "k8s_manifest" "nginx-deployment" {
-  content = "${data.template_file.nginx-deployment.rendered}"
+  content = templatefile("${path.module}/manifest/dummy-deployment.yml.tpl", {
+    app       = "dummyvalue"
+  })
 }
 ```
 
-In this case `manifests/nginx-deployment.yaml` is a templated deployment manifest.
+The templated resource definition should then resemble the following example.
 
 ```yaml
-apiVersion: apps/v1beta2
-kind: Deployment
+apiVersion: apps/v1
 metadata:
-  name: nginx-deployment
   labels:
-    app: nginx
+    app: ${app}
 spec:
-  replicas: ${replicas}
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: ${app}
   template:
     metadata:
       labels:
-        app: nginx
+        app: ${app}
     spec:
       containers:
       - name: nginx
@@ -87,26 +105,20 @@ spec:
         - containerPort: 80
 ```
 
-The Kubernetes resources can then be managed through Terraform.
+## Build
 
-```terminal
-$ terraform apply
-# ...
-Apply complete! Resources: 1 added, 1 changed, 0 destroyed.
-$ kubectl get deployments
-NAME               DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-nginx-deployment   3         3         3            3           1m
-$ terraform apply -var 'replicas=5'
-# ...
-Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
-$ kubectl get deployments
-NAME               DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-nginx-deployment   5         5         5            3           3m
-$ terraform destroy -force
-# ...
-Destroy complete! Resources: 2 destroyed.
-$ kubectl get deployments
-No resources found.
+To build please use [goreleaser](https://goreleaser.com/intro/). You can edit the automated Github Actions by the
+`./.goreleaser.yml` and `./github/workflows/release.yml` files.
+
+To create a test build run the following command:
+
+```
+goreleaser build --snapshot
 ```
 
-[kubernetes-provider]: https://www.terraform.io/docs/providers/kubernetes/index.html
+To push up a new build add a tag based on [semantic versioning](https://semver.org/) with a `v` prefix.
+
+## Publishing
+
+The configuration is a terraform and github integration with manual configuration. The provider has been setup and will
+automatically pickup new version releases in github.
